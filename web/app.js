@@ -159,6 +159,8 @@ async function init() {
   $("modal-close").onclick = closeModal;
   $("modal").addEventListener("click", (e) => { if (e.target === $("modal")) closeModal(); });
   $("clear-offers").onclick = () => { localStorage.removeItem(OFFERS_KEY); renderOffers(); };
+  if (localStorage.getItem("slotex.banner") === "off") $("demo-banner").hidden = true;
+  $("banner-x").onclick = () => { $("demo-banner").hidden = true; localStorage.setItem("slotex.banner", "off"); };
   $("asof").textContent = "sampled snapshot · " + SLOTS.length + " listings";
   renderStats(); renderOffers(); applyFilters();
 }
