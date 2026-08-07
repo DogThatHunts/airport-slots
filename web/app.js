@@ -175,10 +175,11 @@ const HOLDER_CAP = 30;
 function renderFaa() {
   const box = $("faa-view");
   if (!FAA || !FAA.airports) { box.innerHTML = '<div class="empty">FAA data unavailable.</div>'; return; }
-  const a0 = FAA.airports[0] || {};
-  let html = `<div class="faa-note"><b>Real FAA data.</b> Aggregated slot <em>holdings</em> per
-    carrier (not per-flight listings) — FAA "Holder Totals", ${a0.season || ""} ${a0.statusDate || ""}.
-    Source: faa.gov Slot Administration. Slots held &lt;5 days excluded.</div>`;
+  const a0 = FAA.airports.find((a) => !a.sim) || {};
+  let html = `<div class="faa-note"><b>DCA · JFK · LGA — real FAA data</b>
+    ("Holder Totals", ${a0.season || ""} ${a0.statusDate || ""}; slots held &lt;5 days excluded).
+    <b>EWR — simulated</b> (Newark is schedule-facilitated, not slot-controlled).
+    Source: faa.gov Slot Administration.</div>`;
   for (const a of FAA.airports) {
     const max = (a.holders[0] || {}).slots || 1;
     const shown = a.holders.slice(0, HOLDER_CAP);
@@ -189,8 +190,10 @@ function renderFaa() {
         <span class="hv">${h.slots}</span></div>`).join("");
     html += `<div class="faa-panel">
       <div class="faa-h"><span class="apt">${a.airport}</span>
+        ${a.sim ? '<span class="badge sim">SIMULATED</span>' : ""}
         <span class="faa-total">${a.total.toLocaleString()} slots · ${a.holders.length} holders · ${a.season} ${a.statusDate}</span></div>
-      <div class="hbars">${bars}</div>
+      ${a.note ? `<div class="faa-sub">${a.note}</div>` : ""}
+      <div class="hbars${a.sim ? " sim" : ""}">${bars}</div>
       ${more > 0 ? `<div class="empty">+${more} smaller holders not shown</div>` : ""}</div>`;
   }
   box.innerHTML = html;

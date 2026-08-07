@@ -32,7 +32,9 @@ main{max-width:1180px;margin:0 auto;padding:18px 20px 60px}
 .faa-h{display:flex;align-items:baseline;gap:14px;margin-bottom:8px}
 .faa-h .apt{font-size:20px;font-weight:700}
 .faa-total{font-size:12px;color:var(--muted)}
+.faa-sub{font-size:12px;color:var(--muted);margin:-2px 0 8px;font-style:italic}
 .hbars{display:flex;flex-direction:column;gap:5px}
+.hbars.sim .hfill{background:linear-gradient(90deg,#6b7699,#8b97b4)}   /* muted = simulated */
 .hbar{display:grid;grid-template-columns:44px minmax(120px,220px) 1fr 46px;align-items:center;
   gap:10px;font-size:13px}
 .hbar .hc{color:var(--muted);font-weight:700;font-size:12px}

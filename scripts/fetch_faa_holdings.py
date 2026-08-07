@@ -11,6 +11,7 @@ from __future__ import annotations
 
 import json
 import os
+import random
 import re
 import subprocess
 import sys
@@ -67,6 +68,26 @@ def parse(pdf: bytes) -> tuple[str, str, list[dict]]:
     return season, status, holders
 
 
+def sim_ewr() -> dict:
+    """SIMULATED EWR holdings. Newark is schedule-facilitated (Level 2), NOT
+    slot-controlled, so no real per-carrier holdings exist — this is fabricated
+    for the demo and flagged sim=True. United dominates its Newark hub."""
+    rnd = random.Random("slotex:EWR")   # deterministic
+    base = [("UAL", "United Airlines", 400), ("JBU", "JetBlue Airways", 70),
+            ("AAL", "American Airlines", 60), ("DAL", "Delta Air Lines", 58),
+            ("NKS", "Spirit Airlines", 40), ("ASA", "Alaska Airlines", 28),
+            ("FFT", "Frontier Airlines", 22), ("RPA", "Republic Airways", 16),
+            ("EDV", "Endeavor Air", 10), ("AAY", "Allegiant Air", 6)]
+    holders = [{"code": c, "name": n, "slots": max(1, round(v * (0.9 + rnd.random() * 0.2)))}
+               for c, n, v in base]
+    holders.sort(key=lambda h: -h["slots"])
+    return {"airport": "EWR", "season": "Summer", "statusDate": "2025",
+            "total": sum(h["slots"] for h in holders), "holders": holders,
+            "sim": True, "source": "simulated",
+            "note": "Newark is schedule-facilitated (Level 2), not slot-controlled — "
+                    "these per-carrier holdings are SIMULATED for the demo."}
+
+
 def main() -> None:
     urls = discover()
     missing = [a for a in AIRPORTS if a not in urls]
@@ -78,9 +99,11 @@ def main() -> None:
         season, status, holders = parse(pdf)
         airports.append({"airport": a, "season": season, "statusDate": status,
                          "total": sum(h["slots"] for h in holders),
-                         "holders": holders, "source": url})
+                         "holders": holders, "sim": False, "source": url})
         print(f"  {a}: {len(holders)} carriers, {sum(h['slots'] for h in holders)} slots "
               f"({season} {status})")
+    airports.append(sim_ewr())
+    print(f"  EWR: {len(airports[-1]['holders'])} carriers, {airports[-1]['total']} slots (SIMULATED)")
     OUT.write_text(json.dumps({
         "generated": datetime.now(timezone.utc).isoformat(timespec="seconds"),
         "note": "Real FAA Holder Totals (aggregated per-carrier slot holdings, not per-flight).",
