@@ -82,6 +82,11 @@ Datasets defined in `src/schema.py` (`registry`, `slots`) → separate Sheet tab
       price now correct). Expanded via `scripts/build_web_dataset.py`: real Brazil
       + SIMULATED US/EU Level-3 hubs (35 airports, 3,790 listings, market-grouped
       dropdown, SIM badges). Real Sheet/pipeline stay real-only.
+- [x] **FAA real holdings view (DONE)** — `scripts/fetch_faa_holdings.py` parses the
+      real FAA "Holder Totals" PDFs (DCA/JFK/LGA, S25) via pdftotext →
+      `web/data/faa_holdings.json` (DCA 892 slots/9 holders, JFK 1497/93, LGA 1141/12,
+      Summer 2025). Separate "FAA slot holdings [REAL]" tab in SlotEx with per-carrier
+      bars; deep-link `?view=faa`. FAA WAF needs a plain browser UA (bot UA 403s).
 - [ ] Local cron worker (deferred)
 - [ ] Enable doorbell routine when ready
 - [ ] PARKED: Hong Kong / FAA tiers

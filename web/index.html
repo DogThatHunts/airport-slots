@@ -18,6 +18,12 @@
 </header>
 
 <main>
+  <nav class="views">
+    <button class="view-btn active" data-view="market">Marketplace</button>
+    <button class="view-btn" data-view="faa">FAA slot holdings <span class="real">REAL</span></button>
+  </nav>
+
+  <div id="market-view">
   <section class="controls">
     <label>Airport
       <select id="f-airport"></select>
@@ -53,6 +59,9 @@
       <div id="offers-list" class="offers-list"></div>
     </aside>
   </section>
+  </div><!-- /market-view -->
+
+  <section id="faa-view" hidden></section>
 </main>
 
 <div id="modal" class="modal" hidden>

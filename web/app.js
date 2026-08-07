@@ -2,7 +2,7 @@
 
 const DAYS_ORDER = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"];
 const OFFERS_KEY = "slotex.offers";
-let SLOTS = [], REG = {}, SIM_AIRPORTS = new Set();
+let SLOTS = [], REG = {}, SIM_AIRPORTS = new Set(), FAA = null;
 
 function hashStr(s) { let h = 0; for (const c of s) h = (h * 31 + c.charCodeAt(0)) | 0; return Math.abs(h); }
 
@@ -170,6 +170,41 @@ function renderOffers() {
   }
 }
 
+// ---- FAA holdings view (real, aggregated per-carrier) ----
+const HOLDER_CAP = 30;
+function renderFaa() {
+  const box = $("faa-view");
+  if (!FAA || !FAA.airports) { box.innerHTML = '<div class="empty">FAA data unavailable.</div>'; return; }
+  const a0 = FAA.airports[0] || {};
+  let html = `<div class="faa-note"><b>Real FAA data.</b> Aggregated slot <em>holdings</em> per
+    carrier (not per-flight listings) — FAA "Holder Totals", ${a0.season || ""} ${a0.statusDate || ""}.
+    Source: faa.gov Slot Administration. Slots held &lt;5 days excluded.</div>`;
+  for (const a of FAA.airports) {
+    const max = (a.holders[0] || {}).slots || 1;
+    const shown = a.holders.slice(0, HOLDER_CAP);
+    const more = a.holders.length - shown.length;
+    const bars = shown.map((h) => `
+      <div class="hbar"><span class="hc">${h.code}</span><span class="hn">${h.name}</span>
+        <span class="htrack"><span class="hfill" style="width:${Math.max(2, h.slots / max * 100)}%"></span></span>
+        <span class="hv">${h.slots}</span></div>`).join("");
+    html += `<div class="faa-panel">
+      <div class="faa-h"><span class="apt">${a.airport}</span>
+        <span class="faa-total">${a.total.toLocaleString()} slots · ${a.holders.length} holders · ${a.season} ${a.statusDate}</span></div>
+      <div class="hbars">${bars}</div>
+      ${more > 0 ? `<div class="empty">+${more} smaller holders not shown</div>` : ""}</div>`;
+  }
+  box.innerHTML = html;
+}
+
+function setupViews() {
+  const btns = [...document.querySelectorAll(".view-btn")];
+  btns.forEach((b) => b.onclick = () => {
+    btns.forEach((x) => x.classList.toggle("active", x === b));
+    $("market-view").hidden = b.dataset.view !== "market";
+    $("faa-view").hidden = b.dataset.view !== "faa";
+  });
+}
+
 let toastT;
 function toast(msg) { const t = $("toast"); t.textContent = msg; t.hidden = false; clearTimeout(toastT); toastT = setTimeout(() => t.hidden = true, 2600); }
 
@@ -179,6 +214,7 @@ async function init() {
     fetch("data/slots.json").then((r) => r.json()),
   ]);
   for (const k in REG) REG[k].level = String(REG[k].level ?? "");   // gspread may hand back numbers
+  FAA = await fetch("data/faa_holdings.json").then((r) => r.json()).catch(() => null);
   SIM_AIRPORTS = new Set(SLOTS.filter((s) => s.sim).map((s) => s.airport));
   const sel = $("f-airport");
   sel.appendChild(new Option("All airports", ""));
@@ -199,6 +235,8 @@ async function init() {
   if (localStorage.getItem("slotex.banner") === "off") $("demo-banner").hidden = true;
   $("banner-x").onclick = () => { $("demo-banner").hidden = true; localStorage.setItem("slotex.banner", "off"); };
   $("asof").textContent = "sampled snapshot · " + SLOTS.length + " listings";
-  renderStats(); renderOffers(); applyFilters();
+  renderStats(); renderOffers(); renderFaa(); setupViews(); applyFilters();
+  if (new URLSearchParams(location.search).get("view") === "faa")
+    document.querySelector('.view-btn[data-view="faa"]').click();
 }
 init();
