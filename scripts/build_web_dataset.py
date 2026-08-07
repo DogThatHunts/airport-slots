@@ -52,18 +52,8 @@ HUBS = {
     "ARN": ("Europe", ["SK", "D8"], "short"),
     "DUS": ("Europe", ["EW", "U2"], "short"),
     "MAN": ("Europe", ["U2", "TOM", "BA"], "short"),
-    "JFK": ("US", ["DL", "B6", "AA"], "mix"),
-    "LGA": ("US", ["DL", "AA", "WN"], "short"),
-    "DCA": ("US", ["AA", "DL", "WN"], "short"),
-    "EWR": ("US", ["UA", "B6"], "mix"),
-    "ORD": ("US", ["UA", "AA"], "mix"),
-    "SFO": ("US", ["UA", "AS"], "mix"),
-    "LAX": ("US", ["AA", "DL", "UA"], "mix"),
-    "BOS": ("US", ["B6", "DL", "AA"], "short"),
-    "SEA": ("US", ["AS", "DL"], "mix"),
-    "MIA": ("US", ["AA", "B6"], "mix"),
-    "ATL": ("US", ["DL", "WN"], "mix"),
-    "DFW": ("US", ["AA", "WN"], "short"),
+    # US hubs are now covered by REAL BTS scheduled data (scripts/fetch_bts_eastcoast.py),
+    # so they are no longer simulated here. Europe stays simulated (no open EU slot data).
 }
 PER_HUB = 90
 WINDOWS = ["2026-03-29..2026-10-24", "2026-10-25..2027-03-27"]

@@ -102,6 +102,16 @@ Datasets defined in `src/schema.py` (`registry`, `slots`) → separate Sheet tab
       surrogate = **BTS On-Time scheduled flights** (free, flight-level, every airport,
       2026-current) + **FAA ASPM called rates** for declared capacity (slot-pressure).
       Recommended next: a BTS-based real US East Coast layer; swap EWR to the real cap.
+- [x] **Real US East Coast layer (DONE)** — `scripts/fetch_bts_eastcoast.py` pulls
+      BTS On-Time Performance (latest month, 2026-05), filters 19 East Coast airports
+      (PWM/BOS/BDL/JFK/LGA/EWR/PHL/BWI/DCA/IAD/CLT/RDU/CHS/ATL/SAV/MIA/MCO/FLL/TPA),
+      collapses to recurring slots (~3,800 real listings) → `web/data/slots_bts.json`.
+      App loads + merges them (SCHED badge, "US East Coast (real schedules)" group).
+      US hubs removed from the simulator (`build_web_dataset.py` now EU-only sim).
+- [x] **EWR → real FAA cap (DONE)** — FAA view shows the real operating cap 72/hr
+      (36+36) through 2026-10-24 (Fed. Reg. 2025-18871) instead of simulated holdings.
+- [x] **FAA auto-season poller (DONE)** — `fetch_faa_holdings.py` auto-detects the
+      latest posted HOLDER_TOTALS season per airport (S25 now; auto-upgrades to S26).
 - [ ] Local cron worker (deferred)
 - [ ] Enable doorbell routine when ready
 - [ ] PARKED: Hong Kong / FAA tiers

@@ -35,6 +35,13 @@ main{max-width:1180px;margin:0 auto;padding:18px 20px 60px}
 .faa-sub{font-size:12px;color:var(--muted);margin:-2px 0 8px;font-style:italic}
 .hbars{display:flex;flex-direction:column;gap:5px}
 .hbars.sim .hfill{background:linear-gradient(90deg,#6b7699,#8b97b4)}   /* muted = simulated */
+.badge.real{background:rgba(51,214,166,.15);color:var(--accent2);border:1px solid rgba(51,214,166,.4)}
+.cap{background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:18px 20px;
+  display:flex;flex-direction:column;gap:6px;max-width:440px}
+.cap-big{font-size:44px;font-weight:800;color:var(--accent2);line-height:1}
+.cap-big span{font-size:16px;color:var(--muted);font-weight:600;margin-left:6px}
+.cap-split{font-size:15px;color:var(--ink)}
+.cap-meta{font-size:12px;color:var(--muted)}
 .hbar{display:grid;grid-template-columns:44px minmax(120px,220px) 1fr 46px;align-items:center;
   gap:10px;font-size:13px}
 .hbar .hc{color:var(--muted);font-weight:700;font-size:12px}
@@ -56,6 +63,8 @@ main{max-width:1180px;margin:0 auto;padding:18px 20px 60px}
 .badge.sim{background:rgba(139,151,180,.15);color:var(--muted);border:1px solid rgba(139,151,180,.4)}
 .card .sim{font-size:9px;font-weight:700;letter-spacing:.5px;color:var(--muted);
   border:1px solid var(--line);border-radius:4px;padding:1px 4px;vertical-align:middle}
+.card .sched{font-size:9px;font-weight:700;letter-spacing:.5px;color:var(--accent2);
+  border:1px solid rgba(51,214,166,.4);border-radius:4px;padding:1px 4px;vertical-align:middle}
 .layout{display:grid;grid-template-columns:1fr 300px;gap:18px}
 .listings-head{display:flex;justify-content:space-between;align-items:baseline;margin-bottom:10px}
 .listings-head .hint{font-size:12px;color:var(--muted)}

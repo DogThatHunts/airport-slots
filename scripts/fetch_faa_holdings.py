@@ -1,17 +1,18 @@
 #!/usr/bin/env python3
-"""Fetch REAL FAA slot-holder totals for DCA/JFK/LGA -> web/data/faa_holdings.json.
+"""Fetch REAL FAA slot data -> web/data/faa_holdings.json.
 
-Source: FAA Slot Administration "Holder Totals" PDF reports (latest season, S25).
-These are aggregated per-carrier slot HOLDINGS (not per-flight), so they get their
-own view in the web app rather than being mixed into the marketplace listings.
+- DCA/JFK/LGA: real per-carrier "Holder Totals" (aggregated holdings) from the
+  latest posted season's PDF reports (auto-detected — upgrades to S26/W26 the
+  moment the FAA posts them; today the newest is S25).
+- EWR: NOT slot-controlled (schedule-facilitated / Level 2). We show the real FAA
+  operating CAP (72/hr = 36 arr + 36 dep, through 2026-10-24) instead of holdings.
 
-Needs `pdftotext` (poppler). A browser User-Agent is required (FAA 403s otherwise).
+Needs `pdftotext` (poppler). FAA's WAF 403s bot UAs, so we present a browser UA.
 """
 from __future__ import annotations
 
 import json
 import os
-import random
 import re
 import subprocess
 import sys
@@ -23,28 +24,37 @@ import requests
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 
-# FAA's WAF 403s our bot UA — must present a plain browser UA.
 USER_AGENT = ("Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 "
               "(KHTML, like Gecko) Chrome/124.0 Safari/537.36")
-
 PAGE = ("https://www.faa.gov/about/office_org/headquarters_offices/ato/service_units/"
         "systemops/perf_analysis/slot_administration/data")
 AIRPORTS = ["DCA", "JFK", "LGA"]
-SEASON = "S25"
 OUT = Path(__file__).resolve().parents[1] / "web" / "data" / "faa_holdings.json"
 ROW = re.compile(r"^\s*([A-Z]{3})\s+(.+?)\s+(\d+)\s*$")
+SEASON = re.compile(r"[_-]([SW])(\d{2})[_-]", re.I)   # _S25_ / -W24- in the filename
+
+
+def _season_rank(letter: str, yy: str) -> tuple[int, int]:
+    return (int(yy), 0 if letter.upper() == "S" else 1)   # winter sorts after summer
 
 
 def discover() -> dict[str, str]:
+    """Latest-season HOLDER_TOTALS URL per airport (auto-upgrades when FAA posts a new season)."""
     html = requests.get(PAGE, headers={"User-Agent": USER_AGENT}, timeout=60).text
     hrefs = re.findall(r'href="([^"]+\.pdf)"', html, re.I)
-    urls = {}
-    for a in AIRPORTS:
-        for h in hrefs:
-            if re.search(rf"{a}.*{SEASON}.*HOLDER_TOTALS", h, re.I):
-                urls[a] = h if h.startswith("http") else "https://www.faa.gov" + h
-                break
-    return urls
+    best: dict[str, tuple] = {}
+    for h in hrefs:
+        hl = h.lower()
+        if "holder" not in hl or "total" not in hl:
+            continue
+        m = SEASON.search(h)
+        if not m:
+            continue
+        rank = _season_rank(m.group(1), m.group(2))
+        for a in AIRPORTS:
+            if a.lower() in hl and (a not in best or rank > best[a][0]):
+                best[a] = (rank, h if h.startswith("http") else "https://www.faa.gov" + h)
+    return {a: v[1] for a, v in best.items()}
 
 
 def parse(pdf: bytes) -> tuple[str, str, list[dict]]:
@@ -58,55 +68,40 @@ def parse(pdf: bytes) -> tuple[str, str, list[dict]]:
         os.unlink(path)
     season = (re.search(r"Season\s*=\s*(\w+)", txt) or [None, ""])[1].title()
     status = (re.search(r"Status Date\s*=\s*(\d+)", txt) or [None, ""])[1]
-    holders = []
-    for line in txt.splitlines():
-        m = ROW.match(line)
-        if m:
-            holders.append({"code": m.group(1), "name": m.group(2).strip(),
-                            "slots": int(m.group(3))})
+    holders = [{"code": m.group(1), "name": m.group(2).strip(), "slots": int(m.group(3))}
+               for m in (ROW.match(ln) for ln in txt.splitlines()) if m]
     holders.sort(key=lambda h: -h["slots"])
     return season, status, holders
 
 
-def sim_ewr() -> dict:
-    """SIMULATED EWR holdings. Newark is schedule-facilitated (Level 2), NOT
-    slot-controlled, so no real per-carrier holdings exist — this is fabricated
-    for the demo and flagged sim=True. United dominates its Newark hub."""
-    rnd = random.Random("slotex:EWR")   # deterministic
-    base = [("UAL", "United Airlines", 400), ("JBU", "JetBlue Airways", 70),
-            ("AAL", "American Airlines", 60), ("DAL", "Delta Air Lines", 58),
-            ("NKS", "Spirit Airlines", 40), ("ASA", "Alaska Airlines", 28),
-            ("FFT", "Frontier Airlines", 22), ("RPA", "Republic Airways", 16),
-            ("EDV", "Endeavor Air", 10), ("AAY", "Allegiant Air", 6)]
-    holders = [{"code": c, "name": n, "slots": max(1, round(v * (0.9 + rnd.random() * 0.2)))}
-               for c, n, v in base]
-    holders.sort(key=lambda h: -h["slots"])
-    return {"airport": "EWR", "season": "Summer", "statusDate": "2025",
-            "total": sum(h["slots"] for h in holders), "holders": holders,
-            "sim": True, "source": "simulated",
-            "note": "Newark is schedule-facilitated (Level 2), not slot-controlled — "
-                    "these per-carrier holdings are SIMULATED for the demo."}
+def ewr_cap() -> dict:
+    """Real EWR operating cap (not slot holdings — Newark is Level 2, not slot-controlled)."""
+    return {"airport": "EWR", "type": "cap", "level": "2", "sim": False, "holders": [],
+            "cap": {"perHour": 72, "arr": 36, "dep": 36, "through": "2026-10-24"},
+            "order": "FAA Order — Fed. Reg. 2025-18871 (docket FAA-2008-0221)",
+            "note": "Newark is schedule-facilitated (Level 2), not slot-controlled — no "
+                    "per-carrier slot allocations are published. The FAA imposes a binding "
+                    "hourly operating cap instead."}
 
 
 def main() -> None:
     urls = discover()
-    missing = [a for a in AIRPORTS if a not in urls]
-    if missing:
-        print("WARN: no HOLDER_TOTALS URL found for", missing)
+    if [a for a in AIRPORTS if a not in urls]:
+        print("WARN: missing HOLDER_TOTALS for", [a for a in AIRPORTS if a not in urls])
     airports = []
     for a, url in urls.items():
         pdf = requests.get(url, headers={"User-Agent": USER_AGENT}, timeout=60).content
         season, status, holders = parse(pdf)
-        airports.append({"airport": a, "season": season, "statusDate": status,
-                         "total": sum(h["slots"] for h in holders),
-                         "holders": holders, "sim": False, "source": url})
+        airports.append({"airport": a, "type": "holdings", "season": season, "statusDate": status,
+                         "total": sum(h["slots"] for h in holders), "holders": holders,
+                         "sim": False, "source": url})
         print(f"  {a}: {len(holders)} carriers, {sum(h['slots'] for h in holders)} slots "
-              f"({season} {status})")
-    airports.append(sim_ewr())
-    print(f"  EWR: {len(airports[-1]['holders'])} carriers, {airports[-1]['total']} slots (SIMULATED)")
+              f"({season} {status})  [{url.rsplit('/', 1)[-1]}]")
+    airports.append(ewr_cap())
+    print("  EWR: real FAA cap 72/hr (36+36) through 2026-10-24")
     OUT.write_text(json.dumps({
         "generated": datetime.now(timezone.utc).isoformat(timespec="seconds"),
-        "note": "Real FAA Holder Totals (aggregated per-carrier slot holdings, not per-flight).",
+        "note": "DCA/JFK/LGA: real FAA Holder Totals. EWR: real FAA operating cap (Level 2).",
         "airports": airports,
     }, ensure_ascii=False))
     print("wrote", OUT)

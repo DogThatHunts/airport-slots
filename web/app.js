@@ -1,8 +1,13 @@
 "use strict";
 
 const DAYS_ORDER = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"];
+const US_CITY = { PWM: "Portland", BOS: "Boston", BDL: "Hartford", JFK: "New York–JFK",
+  LGA: "New York–LaGuardia", EWR: "Newark", PHL: "Philadelphia", BWI: "Baltimore",
+  DCA: "Washington–Reagan", IAD: "Washington–Dulles", CLT: "Charlotte", RDU: "Raleigh–Durham",
+  CHS: "Charleston", ATL: "Atlanta", SAV: "Savannah", MIA: "Miami", MCO: "Orlando",
+  FLL: "Fort Lauderdale", TPA: "Tampa" };
 const OFFERS_KEY = "slotex.offers";
-let SLOTS = [], REG = {}, SIM_AIRPORTS = new Set(), FAA = null;
+let SLOTS = [], REG = {}, SIM_AIRPORTS = new Set(), FAA = null, BTS_MONTH = "";
 
 function hashStr(s) { let h = 0; for (const c of s) h = (h * 31 + c.charCodeAt(0)) | 0; return Math.abs(h); }
 
@@ -35,7 +40,7 @@ function airportsInSlots() {
 function airportsGrouped() {
   const info = new Map();
   for (const s of SLOTS) if (!info.has(s.airport))
-    info.set(s.airport, { market: s.market || "Other", city: (REG[s.airport] || {}).city || "" });
+    info.set(s.airport, { market: s.market || "Other", city: (REG[s.airport] || {}).city || US_CITY[s.airport] || "" });
   const groups = {};
   for (const [iata, i] of info) (groups[i.market] ||= []).push([iata, i.city]);
   for (const k in groups) groups[k].sort();
@@ -85,7 +90,17 @@ function applyFilters() {
 function renderAirportInfo(iata) {
   const box = $("airport-info");
   const r = iata && REG[iata];
-  if (!r) { box.hidden = true; return; }
+  if (!r) {
+    if (iata && SLOTS.some((s) => s.airport === iata)) {   // e.g. a BTS US airport (not in WASG registry)
+      box.hidden = false;
+      box.innerHTML =
+        `<span class="big">${iata}</span> <span class="badge real">REAL · scheduled</span>
+         ${US_CITY[iata] ? `<span>${US_CITY[iata]}</span>` : ""}
+         <span>Listings are real scheduled operations (BTS On-Time Performance${BTS_MONTH ? ", " + BTS_MONTH : ""}),
+         a slot-demand surrogate — not slot-controlled.</span>`;
+    } else box.hidden = true;
+    return;
+  }
   box.hidden = false;
   const lvl = r.level === "3" ? '<span class="badge l3">LEVEL 3 · coordinated</span>'
             : r.level === "2" ? '<span class="badge l2">LEVEL 2 · facilitated</span>' : "";
@@ -106,11 +121,11 @@ function renderListings(rows) {
     const card = el("div", "card");
     const route = s.orig_dest ? (s.direction === "arr" ? "from " : "to ") + s.orig_dest : "";
     card.innerHTML =
-      `<div class="top"><span class="apt">${s.airport}${s.sim ? ' <span class="sim">SIM</span>' : ""}</span><span class="dir">${s.direction}</span></div>
+      `<div class="top"><span class="apt">${s.airport}${s.sim ? ' <span class="sim">SIM</span>' : s.src === "BTS" ? ' <span class="sched">SCHED</span>' : ""}</span><span class="dir">${s.direction}</span></div>
        <div class="time">${s.time || "--:--"}</div>
        <div class="flight">${s.carrier} ${s.flight_no} · ${route}</div>
        <div class="days">${s.days || ""}</div>
-       <div class="meta"><span>${s.aircraft || "?"}</span><span>${s.seats || "?"} seats</span><span>${s.service || ""}</span></div>
+       <div class="meta">${[s.aircraft, s.seats ? s.seats + " seats" : "", s.service].filter(Boolean).map((m) => `<span>${m}</span>`).join("")}</div>
        <div class="foot"><span class="price">${fmtPrice(s.price)} <small>/wk</small></span></div>`;
     const btn = el("button", "trade", "Trade");
     btn.onclick = () => openModal(s);
@@ -175,12 +190,13 @@ const HOLDER_CAP = 30;
 function renderFaa() {
   const box = $("faa-view");
   if (!FAA || !FAA.airports) { box.innerHTML = '<div class="empty">FAA data unavailable.</div>'; return; }
-  const a0 = FAA.airports.find((a) => !a.sim) || {};
-  let html = `<div class="faa-note"><b>DCA · JFK · LGA — real FAA data</b>
-    ("Holder Totals", ${a0.season || ""} ${a0.statusDate || ""}; slots held &lt;5 days excluded).
-    <b>EWR — simulated</b> (Newark is schedule-facilitated, not slot-controlled).
+  const a0 = FAA.airports.find((a) => a.type !== "cap") || {};
+  let html = `<div class="faa-note"><b>DCA · JFK · LGA — real FAA "Holder Totals"</b>
+    (${a0.season || ""} ${a0.statusDate || ""}; slots held &lt;5 days excluded).
+    <b>EWR — real FAA operating cap</b> (Level 2 / schedule-facilitated, not slot-controlled).
     Source: faa.gov Slot Administration.</div>`;
   for (const a of FAA.airports) {
+    if (a.type === "cap") { html += capPanel(a); continue; }
     const max = (a.holders[0] || {}).slots || 1;
     const shown = a.holders.slice(0, HOLDER_CAP);
     const more = a.holders.length - shown.length;
@@ -189,14 +205,24 @@ function renderFaa() {
         <span class="htrack"><span class="hfill" style="width:${Math.max(2, h.slots / max * 100)}%"></span></span>
         <span class="hv">${h.slots}</span></div>`).join("");
     html += `<div class="faa-panel">
-      <div class="faa-h"><span class="apt">${a.airport}</span>
-        ${a.sim ? '<span class="badge sim">SIMULATED</span>' : ""}
+      <div class="faa-h"><span class="apt">${a.airport}</span><span class="badge real">REAL</span>
         <span class="faa-total">${a.total.toLocaleString()} slots · ${a.holders.length} holders · ${a.season} ${a.statusDate}</span></div>
-      ${a.note ? `<div class="faa-sub">${a.note}</div>` : ""}
-      <div class="hbars${a.sim ? " sim" : ""}">${bars}</div>
+      <div class="hbars">${bars}</div>
       ${more > 0 ? `<div class="empty">+${more} smaller holders not shown</div>` : ""}</div>`;
   }
   box.innerHTML = html;
+}
+
+function capPanel(a) {
+  return `<div class="faa-panel">
+    <div class="faa-h"><span class="apt">${a.airport}</span>
+      <span class="badge l2">LEVEL 2 · facilitated</span><span class="badge real">REAL</span></div>
+    <div class="faa-sub">${a.note}</div>
+    <div class="cap">
+      <div class="cap-big">${a.cap.perHour}<span>ops/hr</span></div>
+      <div class="cap-split">${a.cap.arr} arrivals &nbsp;+&nbsp; ${a.cap.dep} departures</div>
+      <div class="cap-meta">in effect through ${a.cap.through} · ${a.order}</div>
+    </div></div>`;
 }
 
 function setupViews() {
@@ -212,25 +238,31 @@ let toastT;
 function toast(msg) { const t = $("toast"); t.textContent = msg; t.hidden = false; clearTimeout(toastT); toastT = setTimeout(() => t.hidden = true, 2600); }
 
 async function init() {
-  [REG, SLOTS] = await Promise.all([
-    fetch("data/registry.json").then((r) => r.json()).then((a) => Object.fromEntries(a.map((x) => [x.iata, x]))),
+  const [regData, slotsData, btsData] = await Promise.all([
+    fetch("data/registry.json").then((r) => r.json()),
     fetch("data/slots.json").then((r) => r.json()),
+    fetch("data/slots_bts.json").then((r) => r.json()).catch(() => ({ listings: [] })),
   ]);
+  REG = Object.fromEntries(regData.map((x) => [x.iata, x]));
   for (const k in REG) REG[k].level = String(REG[k].level ?? "");   // gspread may hand back numbers
+  BTS_MONTH = btsData.month || "";
+  SLOTS = slotsData.concat(btsData.listings || []);                 // real Brazil + sim EU + real BTS US
   FAA = await fetch("data/faa_holdings.json").then((r) => r.json()).catch(() => null);
   SIM_AIRPORTS = new Set(SLOTS.filter((s) => s.sim).map((s) => s.airport));
   const sel = $("f-airport");
   sel.appendChild(new Option("All airports", ""));
   const groups = airportsGrouped();
-  const order = ["Europe", "US", "Brazil"];
+  const order = ["US East Coast", "Europe", "Brazil"];
+  const suffix = { "US East Coast": " (real schedules)", Brazil: " (real allocations)" };
   for (const mk of [...order, ...Object.keys(groups).filter((k) => !order.includes(k))]) {
     if (!groups[mk]) continue;
     const og = document.createElement("optgroup");
-    og.label = mk + (mk === "Brazil" ? " (real data)" : " (simulated)");
+    og.label = mk + (suffix[mk] || " (simulated)");
     for (const [iata, city] of groups[mk]) og.appendChild(new Option(`${iata} — ${city}`, iata));
     sel.appendChild(og);
   }
-  sel.value = REG.LHR ? "LHR" : airportsInSlots()[0][0];   // default to a familiar hub
+  sel.value = SLOTS.some((s) => s.airport === "BOS") ? "BOS"
+            : REG.LHR ? "LHR" : airportsInSlots()[0][0];   // default to a real-data airport
   for (const id of ["f-airport", "f-dir", "f-sort", "f-search"]) $(id).addEventListener("input", applyFilters);
   $("modal-close").onclick = closeModal;
   $("modal").addEventListener("click", (e) => { if (e.target === $("modal")) closeModal(); });
