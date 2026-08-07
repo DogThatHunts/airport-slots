@@ -1,0 +1,17 @@
+# Secrets — never commit
+secrets/
+*.json.key
+.env
+
+# Python
+__pycache__/
+*.py[cod]
+.venv/
+venv/
+
+# Local runtime state (keep the dir, ignore contents)
+state/*
+!state/.gitkeep
+
+# OS
+.DS_Store

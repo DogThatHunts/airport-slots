@@ -1,0 +1,43 @@
+# Data sources for the slots pipeline.
+# Recon findings baked in (2026-08-07): the WASG registry is the only openly
+# machine-readable GLOBAL source; real per-flight allocations are open only for a
+# few regions (Brazil best, then Hong Kong historical, then FAA US).
+
+sheet:
+  spreadsheet_name: "database"           # in Drive/airport_slots/database
+  spreadsheet_id: ""                      # kept out of VCS — set via SLOTS_SHEET_ID env or secrets/sheet_id.txt
+  worksheets:
+    meta: "_meta"
+    changelog: "_changelog"
+    review: "_review"                     # human-in-the-loop escalation queue
+    # dataset tabs (airports/slots) are defined in src/schema.py
+
+# Risk thresholds that decide auto-apply vs. escalate-to-phone.
+risk:
+  max_auto_delete_pct: 5        # deleting >5% of rows -> escalate
+  max_auto_change_pct: 30       # changing >30% of rows -> escalate
+  min_expected_rows: 1          # a scrape returning fewer -> escalate (likely broken)
+
+sources:
+  # --- Tier A: global airport registry (backbone) ---------------------------
+  - key: iata_wasg
+    name: "IATA WASG Annex 12.7 — coordinated-airport registry"
+    kind: registry
+    enabled: true
+    cadence: "weekly"           # IATA updates a few times/year; weekly is plenty
+    url: "https://www.iata.org/contentassets/4ede2aabfcc14a55919e468054d714fe/wasg-annex-12.7.xlsx"
+    format: "xlsx"
+    notes: "~400 airports, Level 2/3 per season + coordinator contacts. No auth."
+
+  # --- Tier B: actual slot allocations (per-region, opt-in) -----------------
+  - key: anac_br
+    name: "ANAC Brazil — Slots Alocados"
+    kind: slots
+    enabled: true               # Brazil allocations tier — live
+    cadence: "daily"
+    url: ""                     # directory index; see src/scrapers/anac_br.py
+    format: "csv"
+    opts:
+      airports: ["CGH", "GRU", "PLU", "REC", "SDU"]
+      seasons: ["S26", "W26"]
+    notes: "Daily CSV, CC BY-ND 3.0, flight-level. Best open allocations source."

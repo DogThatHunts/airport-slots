@@ -1,0 +1,68 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>SlotEx — Airport Landing Slot Exchange (Demo)</title>
+<link rel="stylesheet" href="styles.css">
+</head>
+<body>
+<div class="demo-banner">⚠️ DEMO — this is a mock marketplace. No real slots are traded. Prices are simulated. Data: public IATA WASG registry + ANAC Brasil open slots.</div>
+
+<header class="site">
+  <div class="brand"><span class="logo">✈</span> SlotEx <span class="tag">Landing Slot Exchange</span></div>
+  <div class="stats" id="stats"></div>
+</header>
+
+<main>
+  <section class="controls">
+    <label>Airport
+      <select id="f-airport"></select>
+    </label>
+    <label>Direction
+      <select id="f-dir">
+        <option value="">All</option>
+        <option value="arr">Arrivals</option>
+        <option value="dep">Departures</option>
+      </select>
+    </label>
+    <label>Sort
+      <select id="f-sort">
+        <option value="price-desc">Price ↓</option>
+        <option value="price-asc">Price ↑</option>
+        <option value="time-asc">Time ↑</option>
+      </select>
+    </label>
+    <label class="grow">Search
+      <input id="f-search" type="search" placeholder="carrier or flight no. (e.g. G3 1432)">
+    </label>
+  </section>
+
+  <section id="airport-info" class="airport-info" hidden></section>
+
+  <section class="layout">
+    <div>
+      <div class="listings-head"><span id="count"></span><span class="hint">Showing a sampled snapshot</span></div>
+      <div id="listings" class="listings"></div>
+    </div>
+    <aside class="offers">
+      <h3>My offers <button id="clear-offers" title="Clear">clear</button></h3>
+      <div id="offers-list" class="offers-list"></div>
+    </aside>
+  </section>
+</main>
+
+<div id="modal" class="modal" hidden>
+  <div class="modal-card">
+    <button class="close" id="modal-close">×</button>
+    <div id="modal-body"></div>
+  </div>
+</div>
+
+<div id="toast" class="toast" hidden></div>
+
+<footer>SlotEx demo · built from the airport_slots pipeline · <span id="asof"></span></footer>
+
+<script src="app.js"></script>
+</body>
+</html>
