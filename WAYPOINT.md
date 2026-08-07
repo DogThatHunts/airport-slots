@@ -87,6 +87,21 @@ Datasets defined in `src/schema.py` (`registry`, `slots`) → separate Sheet tab
       `web/data/faa_holdings.json` (DCA 892 slots/9 holders, JFK 1497/93, LGA 1141/12,
       Summer 2025). Separate "FAA slot holdings [REAL]" tab in SlotEx with per-carrier
       bars; deep-link `?view=faa`. FAA WAF needs a plain browser UA (bot UA 403s).
+      **EWR added as SIMULATED** (Newark is schedule-facilitated/Level 2, not
+      slot-controlled → no real holdings exist; United-dominated sim, muted bars +
+      SIMULATED badge to separate from the real three). `scripts/fetch_faa_holdings.py`
+      `sim_ewr()`.
+- [x] SlotEx demo checkpointed as "good enough" (user, 2026-08-07).
+- [x] **Research (DONE) → `docs/research-real-data.md`.** Key findings: real US slot
+      allocations exist ONLY for DCA/JFK/LGA (FAA PDFs; 2026/S26 not posted yet, only
+      S25). EWR = Level 2 + real FAA cap 72/hr (36+36) through Oct 24 2026 (Federal
+      Register, docket FAA-2008-0221). All other East Coast airports are uncontrolled
+      (Level 1). Europe: no OPEN per-carrier allocations — real ones are gated behind
+      **e-airportslots.aero** (registration) or ACL commercial license; free tier =
+      capacity params only. **Gate data = proprietary, not usable.** Best real US
+      surrogate = **BTS On-Time scheduled flights** (free, flight-level, every airport,
+      2026-current) + **FAA ASPM called rates** for declared capacity (slot-pressure).
+      Recommended next: a BTS-based real US East Coast layer; swap EWR to the real cap.
 - [ ] Local cron worker (deferred)
 - [ ] Enable doorbell routine when ready
 - [ ] PARKED: Hong Kong / FAA tiers
