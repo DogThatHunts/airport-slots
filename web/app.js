@@ -2,7 +2,7 @@
 
 const DAYS_ORDER = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"];
 const OFFERS_KEY = "slotex.offers";
-let SLOTS = [], REG = {};
+let SLOTS = [], REG = {}, SIM_AIRPORTS = new Set();
 
 function hashStr(s) { let h = 0; for (const c of s) h = (h * 31 + c.charCodeAt(0)) | 0; return Math.abs(h); }
 
@@ -29,6 +29,31 @@ function airportsInSlots() {
   const set = new Map();
   for (const s of SLOTS) if (!set.has(s.airport)) set.set(s.airport, (REG[s.airport] || {}).city || "");
   return [...set.entries()].sort();
+}
+
+// airports with listings, grouped by market (Brazil / US / Europe / …)
+function airportsGrouped() {
+  const info = new Map();
+  for (const s of SLOTS) if (!info.has(s.airport))
+    info.set(s.airport, { market: s.market || "Other", city: (REG[s.airport] || {}).city || "" });
+  const groups = {};
+  for (const [iata, i] of info) (groups[i.market] ||= []).push([iata, i.city]);
+  for (const k in groups) groups[k].sort();
+  return groups;
+}
+
+// Coordinator fields in the WASG data can hold several emails / newlines and long
+// URLs — tidy them for display.
+function cleanEmail(v) {
+  if (!v) return "";
+  return (v.split(/[\n;,]+/).map((x) => x.trim()).find((x) => x.includes("@"))) || "";
+}
+function cleanSite(v) {
+  if (!v) return "";
+  let u = v.trim().split(/\s+/)[0];
+  if (!u) return "";
+  if (!/^https?:\/\//i.test(u)) u = "https://" + u.replace(/^\/+/, "");
+  try { new URL(u); return u; } catch { return ""; }
 }
 
 function currentFilters() {
@@ -64,11 +89,13 @@ function renderAirportInfo(iata) {
   box.hidden = false;
   const lvl = r.level === "3" ? '<span class="badge l3">LEVEL 3 · coordinated</span>'
             : r.level === "2" ? '<span class="badge l2">LEVEL 2 · facilitated</span>' : "";
+  const sim = SIM_AIRPORTS.has(iata) ? '<span class="badge sim">SIMULATED listings</span>' : "";
+  const email = cleanEmail(r.coordinator), site = cleanSite(r.website);
   box.innerHTML =
-    `<span class="big">${iata}</span> ${lvl}
+    `<span class="big">${iata}</span> ${lvl} ${sim}
      <span>${r.city || ""}${r.country ? ", " + r.country : ""}</span>
-     ${r.coordinator ? `<span>Coordinator: <b>${r.coordinator}</b></span>` : ""}
-     ${r.website ? `<span><a href="http://${r.website.replace(/^https?:\/\//, "")}" target="_blank" rel="noopener">${r.website}</a></span>` : ""}`;
+     ${email ? `<span>Coordinator: <b>${email}</b></span>` : ""}
+     ${site ? `<span><a href="${site}" target="_blank" rel="noopener">Coordinator site ↗</a></span>` : ""}`;
 }
 
 function renderListings(rows) {
@@ -79,7 +106,7 @@ function renderListings(rows) {
     const card = el("div", "card");
     const route = s.orig_dest ? (s.direction === "arr" ? "from " : "to ") + s.orig_dest : "";
     card.innerHTML =
-      `<div class="top"><span class="apt">${s.airport}</span><span class="dir">${s.direction}</span></div>
+      `<div class="top"><span class="apt">${s.airport}${s.sim ? ' <span class="sim">SIM</span>' : ""}</span><span class="dir">${s.direction}</span></div>
        <div class="time">${s.time || "--:--"}</div>
        <div class="flight">${s.carrier} ${s.flight_no} · ${route}</div>
        <div class="days">${s.days || ""}</div>
@@ -151,10 +178,20 @@ async function init() {
     fetch("data/registry.json").then((r) => r.json()).then((a) => Object.fromEntries(a.map((x) => [x.iata, x]))),
     fetch("data/slots.json").then((r) => r.json()),
   ]);
+  for (const k in REG) REG[k].level = String(REG[k].level ?? "");   // gspread may hand back numbers
+  SIM_AIRPORTS = new Set(SLOTS.filter((s) => s.sim).map((s) => s.airport));
   const sel = $("f-airport");
   sel.appendChild(new Option("All airports", ""));
-  for (const [iata, city] of airportsInSlots()) sel.appendChild(new Option(`${iata} — ${city}`, iata));
-  sel.value = airportsInSlots()[0][0];   // default to first airport so the info panel shows
+  const groups = airportsGrouped();
+  const order = ["Europe", "US", "Brazil"];
+  for (const mk of [...order, ...Object.keys(groups).filter((k) => !order.includes(k))]) {
+    if (!groups[mk]) continue;
+    const og = document.createElement("optgroup");
+    og.label = mk + (mk === "Brazil" ? " (real data)" : " (simulated)");
+    for (const [iata, city] of groups[mk]) og.appendChild(new Option(`${iata} — ${city}`, iata));
+    sel.appendChild(og);
+  }
+  sel.value = REG.LHR ? "LHR" : airportsInSlots()[0][0];   // default to a familiar hub
   for (const id of ["f-airport", "f-dir", "f-sort", "f-search"]) $(id).addEventListener("input", applyFilters);
   $("modal-close").onclick = closeModal;
   $("modal").addEventListener("click", (e) => { if (e.target === $("modal")) closeModal(); });

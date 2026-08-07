@@ -1,0 +1,37 @@
+/*
+ * SlotEx / airport_slots — brand color reference
+ * ------------------------------------------------
+ * Dark "night aviation" palette. Import this file or copy the :root block.
+ * Each token lists hex + rgb + where it's used.
+ */
+:root {
+  /* Surfaces (darkest -> lightest) */
+  --bg:      #0b1020;  /* rgb(11,16,32)   page background, favicon bg      */
+  --panel:   #141b30;  /* rgb(20,27,48)   cards, controls, inputs         */
+  --panel2:  #1c2540;  /* rgb(28,37,64)   nested surfaces (offers, modal in) */
+  --line:    #26304f;  /* rgb(38,48,79)   borders / dividers              */
+
+  /* Text */
+  --ink:     #e7ecf6;  /* rgb(231,236,246) primary text                   */
+  --muted:   #8b97b4;  /* rgb(139,151,180) secondary / labels             */
+
+  /* Accents */
+  --accent:  #4da3ff;  /* rgb(77,163,255)  primary blue: logo, buttons, links, plane */
+  --accent2: #33d6a6;  /* rgb(51,214,166)  green: price, confirm actions   */
+  --warn:    #ffcf5c;  /* rgb(255,207,92)  demo banner / cautions          */
+  --l3:      #ff7a7a;  /* rgb(255,122,122) Level-3 airport badge           */
+}
+
+/*
+ * Quick swatch reference (name — hex — role)
+ *   bg      #0b1020  background
+ *   panel   #141b30  cards
+ *   panel2  #1c2540  nested
+ *   line    #26304f  borders
+ *   ink     #e7ecf6  text
+ *   muted   #8b97b4  labels
+ *   accent  #4da3ff  brand blue  ← the plane
+ *   accent2 #33d6a6  brand green
+ *   warn    #ffcf5c  caution
+ *   l3      #ff7a7a  level-3 red
+ */

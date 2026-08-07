@@ -71,7 +71,17 @@ Datasets defined in `src/schema.py` (`registry`, `slots`) → separate Sheet tab
       (vanilla JS, no build). Snapshot via `scripts/export_web_data.py`
       (402 airports + 1,600 sampled slots → `web/data/*.json`). Served locally OK.
       Data expansion (HK/FAA, more sources) PARKED per user.
-- [ ] Publish web app to GitHub Pages (repo not yet on GitHub)
+- [x] **Published (DONE)** — public repo https://github.com/DogThatHunts/airport-slots
+      → live at **https://dogthathunts.github.io/airport-slots/** via Actions
+      (`.github/workflows/pages.yml` deploys `web/`). Sheet ID scrubbed from VCS
+      (moved to gitignored `secrets/sheet_id.txt`; `sheets._sheet_id()` resolves
+      env `SLOTS_SHEET_ID` > secrets file > config). Auto-redeploys on push to main.
+- [x] **SlotEx v2 (DONE)** — favicon (`scripts/make_favicon.py` → light-blue plane
+      `web/favicon.ico`); brand palette reference `brand/colors.css`; tidied
+      coordinator email/website display; fixed level-as-number bug (L3 badge/stat/
+      price now correct). Expanded via `scripts/build_web_dataset.py`: real Brazil
+      + SIMULATED US/EU Level-3 hubs (35 airports, 3,790 listings, market-grouped
+      dropdown, SIM badges). Real Sheet/pipeline stay real-only.
 - [ ] Local cron worker (deferred)
 - [ ] Enable doorbell routine when ready
 - [ ] PARKED: Hong Kong / FAA tiers
