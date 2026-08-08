@@ -5,6 +5,24 @@ _Last updated: 2026-08-07_
 A running checkpoint of decisions, state, and next steps so any session (or you on
 your phone) can pick up without re-deriving context.
 
+## ✅ Checkpoint — clean stopping point (2026-08-07)
+
+Two things live and healthy:
+
+1. **Pipeline** (`run.py`): scrapes → Google Sheet (`airports` 402, `slots` 16,703
+   real Brazil), risk-gated auto-apply/escalate, phone-decision loop honored on next
+   run. Sheet ID gitignored. Doorbell routine `trig_01WaXxTA5R7ktybDSDNGZboQ` built,
+   verified, **disabled** (enable when ready).
+2. **SlotEx demo** — public repo `DogThatHunts/airport-slots`, live at
+   **https://dogthathunts.github.io/airport-slots/** (auto-deploys on push to `main`).
+   **All data is real** (only prices/trading are mock):
+   - Marketplace: Brazil ANAC slots (real) + US East Coast BTS schedules (real, 19 airports).
+   - FAA tab: real slot holdings DCA/JFK/LGA + real EWR operating cap.
+   - Europe tab: real declared capacity, 15 hubs (FCO omitted — login-gated).
+   Data provenance for every airport → `docs/data-sources.md`.
+
+Nothing in flight. Safe to stop. Open/optional items are in "Next actions" below.
+
 ## Goal
 
 Autonomous pipeline that scrapes airport landing-slot data → writes a Google Sheet,
