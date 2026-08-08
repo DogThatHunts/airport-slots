@@ -113,12 +113,15 @@ Datasets defined in `src/schema.py` (`registry`, `slots`) → separate Sheet tab
 - [x] **FAA auto-season poller (DONE)** — `fetch_faa_holdings.py` auto-detects the
       latest posted HOLDER_TOTALS season per airport (S25 now; auto-upgrades to S26).
 - [x] **Swap Europe → real capacity parameters (DONE)** — simulated EU listings
-      removed; new **"Europe · capacity [REAL]"** tab shows 13 hubs' REAL declared
+      removed; new **"Europe · capacity [REAL]"** tab shows 15 hubs' REAL declared
       coordination capacity (movements/hr + annual/seasonal caps) with source links,
       from coordinators' capacity declarations (LHR/LGW/STN/MAN ACL, DUB IAA, CDG/ORY
       COHOR, FRA/MUC Fluko, MAD/BCN DGAC, ZRH SCS, VIE SCA). Data hand-built from a
-      cited research pass → `web/data/eu_capacity.json`. AMS/FCO/LIS omitted (not
-      published extractably). **The app is now all-real data** (only prices/trading
+      cited research pass → `web/data/eu_capacity.json`. AMS added (110/hr, ACNL S26
+      PDF via pdftotext — primary) and LIS (~38/hr, secondary source, amber-flagged).
+      FCO omitted — Assoclearance parameters are login-gated (documented). Full
+      provenance table (every dataset/airport, source + method) → **`docs/data-sources.md`**.
+      **The app is now all-real data** (only prices/trading
       are mock): Brazil ANAC slots + US BTS schedules + FAA holdings/EWR cap + EU
       capacity. Simulator retired (`build_web_dataset.py` sim=[]).
 - [ ] Local cron worker (deferred)

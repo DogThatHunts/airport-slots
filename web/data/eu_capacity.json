@@ -1,6 +1,6 @@
 {
   "generated": "2026-08-07",
-  "note": "Real declared coordination capacity (movements/hour) from each coordinator's published capacity declaration. These are capacity PARAMETERS, not per-flight slot allocations (which EU coordinators don't publish openly). AMS/FCO/LIS omitted — capacity not published in machine-extractable form.",
+  "note": "Real declared coordination capacity (movements/hour) from each coordinator's published capacity declaration. These are capacity PARAMETERS, not per-flight slot allocations (which EU coordinators don't publish openly). LIS is a widely-cited secondary figure (no open S26 primary). FCO omitted — Assoclearance publishes its parameters behind login.",
   "airports": [
     {"iata": "LHR", "name": "London Heathrow", "coordinator": "ACL (UK)", "season": "S26",
      "total": null, "arr": 46, "dep": 45,
@@ -66,6 +66,17 @@
      "total": 68, "arr": null, "dep": null,
      "detail": "68/hr (48 arr / 50 dep); 34 per 30-min; 12 per 10-min; 7 per 5-min.",
      "caps": "Night runway limits 21:00–06:55 LT.",
-     "source": "https://www.slots-austria.com/airports/vienna_airport"}
+     "source": "https://www.slots-austria.com/airports/vienna_airport"},
+    {"iata": "AMS", "name": "Amsterdam Schiphol", "coordinator": "ACNL (Netherlands)", "season": "S26",
+     "total": 110, "arr": null, "dep": null,
+     "detail": "Peak rolling-hour by mode: departure-peak 36 arr + 74 dep = 110/hr; arrival-peak 68 arr + 38 dep = 106/hr; off-peak 76/hr. Slots per 5-min.",
+     "caps": "Season environmental cap 290,261 ATMs; operational 293,226 slots (night 21,290).",
+     "source": "https://slotcoordination.nl/wp-content/uploads/2025/10/AMS-Capacity-Declaration-Summer-2026.pdf"},
+    {"iata": "LIS", "name": "Lisbon Humberto Delgado", "coordinator": "NAV Portugal", "season": "current",
+     "total": 38, "arr": null, "dep": null,
+     "detail": "Peak ~38/hr (sub-limits 26 arr / 26 dep), varying up to ~40; 5-min rolling. Plan to raise to 45 by ~2028.",
+     "caps": "",
+     "flag": "widely-cited ceiling — secondary source, no open S26 primary declaration",
+     "source": "https://theportugalpost.com/posts/lisbon-targets-45-flights-an-hour-as-airport-overhaul-looms"}
   ]
 }

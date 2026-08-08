@@ -236,6 +236,7 @@ function renderEu() {
       <div class="cap-big">${head}<span>${unit}</span></div>
       <div class="eu-detail">${a.detail}</div>
       ${a.caps ? `<div class="eu-caps">${a.caps}</div>` : ""}
+      ${a.flag ? `<div class="eu-flag">⚠ ${a.flag}</div>` : ""}
       <div class="eu-src">${a.coordinator} · ${a.season} · <a href="${a.source}" target="_blank" rel="noopener">capacity declaration ↗</a></div>
     </div>`;
   }).join("");
@@ -243,7 +244,7 @@ function renderEu() {
     `<div class="faa-note"><b>Real declared coordination capacity</b> — movements/hour from each
      coordinator's published capacity declaration (mostly Summer 2026). These are capacity
      <em>parameters</em>, not per-flight allocations (EU coordinators don't publish per-carrier
-     allocations openly). AMS/FCO/LIS omitted — not published in machine-extractable form.</div>
+     allocations openly). FCO omitted — Assoclearance parameters are login-gated; LIS is a secondary-source figure.</div>
      <div class="eu-grid">${cards}</div>`;
 }
 
