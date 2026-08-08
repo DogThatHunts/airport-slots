@@ -116,7 +116,7 @@ def main() -> None:
                            "seats": s["seats"], "orig_dest": s["orig_dest"],
                            "service": s["service"], "window": s["status"], "sim": 0})
 
-    sim = simulate(list(HUBS))
+    sim = []   # Europe is now shown as REAL capacity params (web/data/eu_capacity.json) — no simulation
     slots = brazil + sim
 
     OUT.mkdir(parents=True, exist_ok=True)

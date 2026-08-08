@@ -7,7 +7,7 @@ const US_CITY = { PWM: "Portland", BOS: "Boston", BDL: "Hartford", JFK: "New Yor
   CHS: "Charleston", ATL: "Atlanta", SAV: "Savannah", MIA: "Miami", MCO: "Orlando",
   FLL: "Fort Lauderdale", TPA: "Tampa" };
 const OFFERS_KEY = "slotex.offers";
-let SLOTS = [], REG = {}, SIM_AIRPORTS = new Set(), FAA = null, BTS_MONTH = "";
+let SLOTS = [], REG = {}, SIM_AIRPORTS = new Set(), FAA = null, BTS_MONTH = "", EU = null;
 
 function hashStr(s) { let h = 0; for (const c of s) h = (h * 31 + c.charCodeAt(0)) | 0; return Math.abs(h); }
 
@@ -225,12 +225,35 @@ function capPanel(a) {
     </div></div>`;
 }
 
+function renderEu() {
+  const box = $("eu-view");
+  if (!EU || !EU.airports) { box.innerHTML = '<div class="empty">EU capacity unavailable.</div>'; return; }
+  const cards = EU.airports.map((a) => {
+    const head = a.total != null ? `${a.total}` : `${a.arr}/${a.dep}`;
+    const unit = a.total != null ? "mvts/hr" : "arr/dep per hr";
+    return `<div class="eu-card">
+      <div class="eu-h"><span class="apt">${a.iata}</span><span class="eu-name">${a.name}</span></div>
+      <div class="cap-big">${head}<span>${unit}</span></div>
+      <div class="eu-detail">${a.detail}</div>
+      ${a.caps ? `<div class="eu-caps">${a.caps}</div>` : ""}
+      <div class="eu-src">${a.coordinator} · ${a.season} · <a href="${a.source}" target="_blank" rel="noopener">capacity declaration ↗</a></div>
+    </div>`;
+  }).join("");
+  box.innerHTML =
+    `<div class="faa-note"><b>Real declared coordination capacity</b> — movements/hour from each
+     coordinator's published capacity declaration (mostly Summer 2026). These are capacity
+     <em>parameters</em>, not per-flight allocations (EU coordinators don't publish per-carrier
+     allocations openly). AMS/FCO/LIS omitted — not published in machine-extractable form.</div>
+     <div class="eu-grid">${cards}</div>`;
+}
+
 function setupViews() {
   const btns = [...document.querySelectorAll(".view-btn")];
   btns.forEach((b) => b.onclick = () => {
     btns.forEach((x) => x.classList.toggle("active", x === b));
     $("market-view").hidden = b.dataset.view !== "market";
     $("faa-view").hidden = b.dataset.view !== "faa";
+    $("eu-view").hidden = b.dataset.view !== "eu";
   });
 }
 
@@ -248,6 +271,7 @@ async function init() {
   BTS_MONTH = btsData.month || "";
   SLOTS = slotsData.concat(btsData.listings || []);                 // real Brazil + sim EU + real BTS US
   FAA = await fetch("data/faa_holdings.json").then((r) => r.json()).catch(() => null);
+  EU = await fetch("data/eu_capacity.json").then((r) => r.json()).catch(() => null);
   SIM_AIRPORTS = new Set(SLOTS.filter((s) => s.sim).map((s) => s.airport));
   const sel = $("f-airport");
   sel.appendChild(new Option("All airports", ""));
@@ -270,8 +294,8 @@ async function init() {
   if (localStorage.getItem("slotex.banner") === "off") $("demo-banner").hidden = true;
   $("banner-x").onclick = () => { $("demo-banner").hidden = true; localStorage.setItem("slotex.banner", "off"); };
   $("asof").textContent = "sampled snapshot · " + SLOTS.length + " listings";
-  renderStats(); renderOffers(); renderFaa(); setupViews(); applyFilters();
-  if (new URLSearchParams(location.search).get("view") === "faa")
-    document.querySelector('.view-btn[data-view="faa"]').click();
+  renderStats(); renderOffers(); renderFaa(); renderEu(); setupViews(); applyFilters();
+  const v = new URLSearchParams(location.search).get("view");
+  if (v) document.querySelector(`.view-btn[data-view="${v}"]`)?.click();
 }
 init();

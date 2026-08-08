@@ -10,7 +10,7 @@
 <link rel="stylesheet" href="styles.css">
 </head>
 <body>
-<div class="demo-banner" id="demo-banner"><span>⚠️ DEMO — mock marketplace; no real trading, prices simulated. Data: US East Coast = real BTS schedules (SCHED); Brazil = real ANAC slots; Europe = simulated (SIM); FAA tab = real slot holdings. Sources: BTS, ANAC, FAA, IATA WASG.</span><button id="banner-x" title="Dismiss">×</button></div>
+<div class="demo-banner" id="demo-banner"><span>⚠️ DEMO — mock marketplace; no real trading, prices simulated. But the DATA is real: US East Coast = BTS schedules · Brazil = ANAC slots · Europe = declared capacity · FAA tab = slot holdings. Sources: BTS, ANAC, EU coordinators, FAA.</span><button id="banner-x" title="Dismiss">×</button></div>
 
 <header class="site">
   <div class="brand"><span class="logo">✈</span> SlotEx <span class="tag">Landing Slot Exchange</span></div>
@@ -21,6 +21,7 @@
   <nav class="views">
     <button class="view-btn active" data-view="market">Marketplace</button>
     <button class="view-btn" data-view="faa">FAA slot holdings <span class="real">REAL</span></button>
+    <button class="view-btn" data-view="eu">Europe · capacity <span class="real">REAL</span></button>
   </nav>
 
   <div id="market-view">
@@ -62,6 +63,7 @@
   </div><!-- /market-view -->
 
   <section id="faa-view" hidden></section>
+  <section id="eu-view" hidden></section>
 </main>
 
 <div id="modal" class="modal" hidden>
